@@ -1,5 +1,7 @@
 package com.example.vote_01.Activity
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -19,10 +21,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vote_01.Classes.Group
 import com.example.vote_01.Classes.User
+import com.example.vote_01.Fragment.ResultVote
+import com.example.vote_01.Fragment.VoteFragment
 import com.example.vote_01.ui.theme.*
 
 
@@ -31,21 +36,71 @@ enum class DrawerValue {
     Open
 }
 
+@RequiresApi(Build.VERSION_CODES.N)
+@ExperimentalFoundationApi
 @Composable
-fun GroupActivity() {
-    Text(text = "AAAAAAAAAAAAAA")
-    Text(text = "AAAAAAAAAAAAAA")
-    Text(text = "AAAAAAAAAAAAAA")
-    Text(text = "AAAAAAAAAAAAAA")
-    Text(text = "AAAAAAAAAAAAAA")
-    Text(text = "AAAAAAAAAAAAAA")
+fun GroupActivity(Admin: Boolean, EndedVote:List<ResultVote>, Vote:List<VoteFragment>) {
+    Box( modifier = Modifier
+        .fillMaxSize()
+    ) {
+        //todo view on last vote
+        if(EndedVote.size + Vote.size == 0)
+        {
+            //todo test this messenge
+            Box(modifier = Modifier.fillMaxSize())
+            Text(
+                text = "There was no vote in this group",
+                style = MaterialTheme.typography.h4,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+        else{
+        LazyVerticalGrid(
+            cells = GridCells.Fixed(1),
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(0.dp, 0.dp, 0.dp, 30.dp)
+        )
+        {
+            items(EndedVote.size)
+            {
+                EndedVote[it].ResultToCompose(Admin)
+            }
+            items(Vote.size)
+            {
+                Vote[it].VoteToCompose(Admin)
+            }
+        }
+        if (Admin == true) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(5.dp)
+                    .background(Blue)
+                    .padding(5.dp)
+                    .clickable
+                    {
+                        //todo create vote
+                    }
+                    .align(Alignment.BottomEnd)
+            ) {
+                Text(
+                    text = "Create new vote",
+                    style = MaterialTheme.typography.h5,
+                    color = WhiteText,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+        }
+    }
+    }
 }
 @ExperimentalFoundationApi
 @Composable
-fun GroupMenu() {
+fun GroupMenu(Admin: Boolean) {
     Box(modifier = Modifier
-        .fillMaxSize()
         .background(LightBackGray)
+        .fillMaxSize()
     )
     {
         Column {
@@ -55,7 +110,8 @@ fun GroupMenu() {
                 .background(Blue)
                 .padding(10.dp)
                 .clickable
-                {//todo new user
+                {
+                    //todo new user
                 }
             ) {
                 Text(
@@ -151,14 +207,15 @@ fun userBlock(user: User) {
             lineHeight = 26.sp,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(15.dp,0.dp)
+                .padding(15.dp, 0.dp)
         )
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.N)
 @ExperimentalFoundationApi
 @Composable
-fun VoteInGroup(group: Group) {
+fun VoteInGroup(group: Group,Admin: Boolean) {
     val drawerState = remember { mutableStateOf(DrawerValue.Closed) }
     Scaffold(
         topBar = {
@@ -210,15 +267,19 @@ fun VoteInGroup(group: Group) {
                 val parentHeight = constraints.maxHeight
                 Box {
                     //todo Animation
-                    GroupActivity()
+                    //todo database votes
+                    GroupActivity(Admin, listOf(
+                        ResultVote("asasdadssdadsasdasadsdad", listOf("a","b","c"), listOf(2,4,8)),
+                        ResultVote("asdasd", listOf("a","b","c"), listOf(1,43,8))
+                        ), listOf(VoteFragment(false,"Aasdlasas", listOf("qwdqw","asd","qweeeeee")),VoteFragment(true,"Aasdlasas", listOf("qwdqw","asd","qweeeeee"))))
 
                     if (drawerState.value == DrawerValue.Open) {
                         Box(
                             modifier = Modifier
-                            .size((parentWidth * 0.25).dp , parentHeight.dp)
-                            .offset(x = (parentWidth * 0.12).dp)
+                                .size((parentWidth * 0.25).dp, parentHeight.dp)
+                                .offset(x = (parentWidth * 0.12).dp)
                         ) {
-                            GroupMenu()
+                            GroupMenu(Admin)
                         }
                     }
                 }
