@@ -2,9 +2,6 @@ package com.example.vote_01.Activity
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,18 +9,23 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.vote_01.Classes.Group
 import com.example.vote_01.Classes.User
 import com.example.vote_01.Fragment.ResultVote
@@ -39,7 +41,7 @@ enum class DrawerValue {
 @RequiresApi(Build.VERSION_CODES.N)
 @ExperimentalFoundationApi
 @Composable
-fun GroupActivity(Admin: Boolean, EndedVote:List<ResultVote>, Vote:List<VoteFragment>) {
+fun GroupActivity(navController: NavController,Admin: Boolean, EndedVote:List<ResultVote>, Vote:List<VoteFragment>) {
     Box( modifier = Modifier
         .fillMaxSize()
     ) {
@@ -80,7 +82,7 @@ fun GroupActivity(Admin: Boolean, EndedVote:List<ResultVote>, Vote:List<VoteFrag
                     .padding(5.dp)
                     .clickable
                     {
-                        //todo create vote
+                        navController.navigate("Create_New_Vote")
                     }
                     .align(Alignment.BottomEnd)
             ) {
@@ -97,13 +99,14 @@ fun GroupActivity(Admin: Boolean, EndedVote:List<ResultVote>, Vote:List<VoteFrag
 }
 @ExperimentalFoundationApi
 @Composable
-fun GroupMenu(Admin: Boolean) {
+fun GroupMenu(navController: NavController,Admin: Boolean,creator: User) {
     Box(modifier = Modifier
         .background(LightBackGray)
         .fillMaxSize()
     )
     {
         Column {
+            if(Admin == true){
             Column(modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(5.dp))
@@ -121,6 +124,7 @@ fun GroupMenu(Admin: Boolean) {
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             }
+            }
             Column(modifier = Modifier
                 .fillMaxWidth()
             )
@@ -130,24 +134,25 @@ fun GroupMenu(Admin: Boolean) {
                     style = MaterialTheme.typography.h6,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                listUsers(users = listOf(
-                    User(1,"First Name"),
-                    User(1,"Second Name"),
-                    User(1,"32 Name"),
-                    User(1,"8 Name"),
-                    User(1,"First Name"),
-                    User(1,"Second Name"),
-                    User(1,"32 Name"),
-                    User(1,"8 Name"),
-                    User(1,"First Name"),
-                    User(1,"Second Name"),
-                    User(1,"32 Name"),
-                    User(1,"8 Name"),
-                    User(1,"First Name"),
-                    User(1,"Second Name"),
-                    User(1,"32 Name"),
-                    User(1,"8 Name")
-                ))
+                listUsers(navController,users = listOf(
+                    User(2,false,"Marcin"),
+                    User(3,false,"Anna"),
+                    User(4,false,"Jan Kowalski"),
+                    User(5,true,"Maksym"),
+                    User(6,false,"Mateusz"),
+                    User(7,false,"Dmytro"),
+                    User(8,false,"Grzegorz"),
+                    User(9,true,"Agata"),
+                    User(10,false,"Dominik"),
+                    User(11,false,"Salma"),
+                    User(12,false,"Barbara"),
+                    User(13,false,"Jakub"),
+                    User(42,false,"Kacper"),
+                    User(21,true,"Leon"),
+                    User(132,false,"Marek"),
+                    User(134,false,"Oskar")
+                ),Admin, creator)
+                //todo take with the database
             }
         }
         Column(
@@ -174,7 +179,7 @@ fun GroupMenu(Admin: Boolean) {
 
 @ExperimentalFoundationApi
 @Composable
-fun listUsers(users: List<User>) {
+fun listUsers(navController: NavController,users: List<User>, Admin: Boolean,creator: User) {
     Column(modifier = Modifier.fillMaxWidth()) {
         LazyVerticalGrid(
             cells = GridCells.Fixed(1),
@@ -184,30 +189,92 @@ fun listUsers(users: List<User>) {
         {
             items(users.size)
             {
-                userBlock(user = users[it])
+                userBlock(navController,user = users[it],Admin,creator)
             }
         }
     }
 }
 
 @Composable
-fun userBlock(user: User) {
+fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: User) {
+    //open Dialog for options user
+    val openDialog = remember { mutableStateOf(false)  }
+
     BoxWithConstraints(modifier = Modifier
         .padding(2.dp)
         .clip(RoundedCornerShape(5.dp))
         .background(LightGray)
         .padding(5.dp)
         .clickable {
-            //todo option users
+            openDialog.value = true
         }
-    ){
-        Text (
-            text = user.name,
-            style = MaterialTheme.typography.h5,
-            lineHeight = 26.sp,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(15.dp, 0.dp)
+    ) {
+        if (user.administrator) {
+            Text(
+                text = user.name,
+                style = MaterialTheme.typography.h5,
+                lineHeight = 26.sp,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(15.dp, 0.dp)
+            )
+            Text(
+                text = "Moderator",
+                color = LightRed,
+                fontSize = 10.sp,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(15.dp, 0.dp)
+            )
+        } else {
+            Text(
+                text = user.name,
+                style = MaterialTheme.typography.h5,
+                lineHeight = 26.sp,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(15.dp, 0.dp)
+            )
+        }
+    }
+    if (openDialog.value) {
+        AlertDialog(
+            onDismissRequest = { openDialog.value = false },
+            title = { Text(text = "User options", modifier = Modifier.padding(bottom = 10.dp)) },
+                confirmButton = {
+                    if(!user.administrator && Admin) {
+                        Button(
+                            onClick = {
+                                //todo add moderator
+                                openDialog.value = false
+                            }, colors = ButtonDefaults.buttonColors(backgroundColor = LightYellow)
+                        ) {
+                            Text("Give moderator mode this user")
+                        }
+                        Button(
+                            onClick = {
+                                //todo kick user
+                                openDialog.value = false
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = LightRed)
+                        ) {
+                            Text("Kick user")
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            //todo add Open profile
+                            openDialog.value = false
+                        }, colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)) {
+                        Text("Open profile")
+                    }
+                    Button(
+                        onClick = {
+                            openDialog.value = false
+                        }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Gray)) {
+                        Text("Cancel")
+                    }
+                }
         )
     }
 }
@@ -215,7 +282,7 @@ fun userBlock(user: User) {
 @RequiresApi(Build.VERSION_CODES.N)
 @ExperimentalFoundationApi
 @Composable
-fun VoteInGroup(group: Group,Admin: Boolean) {
+fun VoteInGroup(navController: NavController,group: Group,Admin: Boolean) {
     val drawerState = remember { mutableStateOf(DrawerValue.Closed) }
     Scaffold(
         topBar = {
@@ -225,30 +292,27 @@ fun VoteInGroup(group: Group,Admin: Boolean) {
                     .background(DarkBlue)
             ) {
                 Row {
-                    Text(
-                        text = "<-",
-                        style = MaterialTheme.typography.h4,
-                        color = WhiteText,
+                    Icon(imageVector = Icons.Outlined.ArrowBack, contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier
-                            .padding(10.dp)
+                            .size(50.dp)
+                            .padding(top = 20.dp, start = 15.dp)
                             .clickable {
-                                //todo back to menu
+                                navController.navigate("MainMenu")
                             }
-                    )
+                        )
                     Text(
                         text = group.Name,
                         style = MaterialTheme.typography.h4,
                         color = WhiteText,
                         modifier = Modifier
-                            .padding(10.dp)
+                            .padding(start = 15.dp, top = 10.dp, bottom = 10.dp)
                     )
                 }
-                Text(
-                    text = "*",
-                    style = MaterialTheme.typography.h4,
-                    color = WhiteText,
+                Icon(imageVector = Icons.Outlined.Menu, contentDescription = null,
+                    tint = Color.White,
                     modifier = Modifier
-                        .padding(15.dp)
+                        .padding(end = 15.dp, top = 20.dp)
                         .align(Alignment.TopEnd)
                         .clickable {
                             if (drawerState.value == DrawerValue.Closed) {
@@ -268,10 +332,11 @@ fun VoteInGroup(group: Group,Admin: Boolean) {
                 Box {
                     //todo Animation
                     //todo database votes
-                    GroupActivity(Admin, listOf(
-                        ResultVote("asasdadssdadsasdasadsdad", listOf("a","b","c"), listOf(2,4,8)),
-                        ResultVote("asdasd", listOf("a","b","c"), listOf(1,43,8))
-                        ), listOf(VoteFragment(false,"Aasdlasas", listOf("qwdqw","asd","qweeeeee")),VoteFragment(true,"Aasdlasas", listOf("qwdqw","asd","qweeeeee"))))
+                    GroupActivity(navController,Admin, listOf(
+                        ResultVote("Głosowonie za starostę grupy", listOf("Marcin W.","Jaj K.","Anna T."), listOf(6,4,5)),
+                        ResultVote("Za pomocnika starosty", listOf("Marcin W.","Anna T."), listOf(6,8))
+                        ), listOf(VoteFragment(false,"Egzamin z programowania", listOf("20 stycznia","22 stycztia","2 luty")),
+                        VoteFragment(true,"Godzina egzaminu", listOf("15:20","17:00","18:30","19:20"))))
 
                     if (drawerState.value == DrawerValue.Open) {
                         Box(
@@ -279,7 +344,7 @@ fun VoteInGroup(group: Group,Admin: Boolean) {
                                 .size((parentWidth * 0.25).dp, parentHeight.dp)
                                 .offset(x = (parentWidth * 0.12).dp)
                         ) {
-                            GroupMenu(Admin)
+                            GroupMenu(navController,Admin,group.Creator)
                         }
                     }
                 }
@@ -287,5 +352,3 @@ fun VoteInGroup(group: Group,Admin: Boolean) {
         }
     )
 }
-
-

@@ -10,14 +10,17 @@ import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.vote_01.Fragment.ToastComp
 import com.example.vote_01.ui.theme.*
 import java.sql.Time
@@ -26,7 +29,15 @@ import androidx.compose.runtime.remember as remember
 
 @ExperimentalFoundationApi
 @Composable
-fun CreateVoteActivity(id_group: Int) {
+fun CreateVoteActivity(navController: NavController, id_group: Int) {
+    var text = rememberSaveable { mutableStateOf("") }
+    var day = rememberSaveable { mutableStateOf(0) }
+    var hour = rememberSaveable { mutableStateOf(0) }
+    var minute = rememberSaveable { mutableStateOf(0) }
+    val options = remember { mutableStateOf(1) }
+    var optionsStr = remember { mutableStateListOf<String>() }
+    //context for toast
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             Box(
@@ -52,7 +63,24 @@ fun CreateVoteActivity(id_group: Int) {
                     .padding(5.dp)
                     .clickable
                     {
-                        //todo create vote
+                        if(text.value == "")
+                        {
+                            ToastComp(context,"Name can not be empty")
+                        }else{
+                            if(day.value == 0 && hour.value == 0 && minute.value == 0)
+                            {
+                                ToastComp(context,"Time can not be 0")
+                            }
+                            else{
+                                if(optionsStr[1].isBlank()){
+                                    ToastComp(context,"Options can not be empty")
+                                }else
+                                {
+                                    //todo create vote
+                                    navController.navigate("Open_Group")
+                                }
+                            }
+                        }
                     }
             ) {
                 Text(
@@ -64,22 +92,18 @@ fun CreateVoteActivity(id_group: Int) {
             }
         },
         content = {
-            var text = rememberSaveable { mutableStateOf("") }
-            var day = rememberSaveable { mutableStateOf(0) }
-            var hour = rememberSaveable { mutableStateOf(0) }
-            var minute = rememberSaveable { mutableStateOf(0) }
-            var optionsStr = remember { mutableListOf<String>()}
             Column{
-            TextField(
-                value = text.value,
-                onValueChange = {
-                    text.value = it
-                },
-                label = { Text("Description vote", color = Black) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 15.dp)
-            )
+                OutlinedTextField(
+                    value = text.value,
+                    onValueChange = {
+                        text.value = it
+                    },
+                    label = { Text("Description vote", color = Black) },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = Color.Gray, cursorColor = Color.Gray),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 15.dp)
+                )
             Row(modifier = Modifier.fillMaxWidth())
             {
                 val selectedOption = remember { mutableStateOf(false) }
@@ -182,9 +206,6 @@ fun CreateVoteActivity(id_group: Int) {
                     }
                     }
                 }
-                //context for toast
-                val context = LocalContext.current
-                val options = remember { mutableStateOf(1) }
                 LazyVerticalGrid(
                     cells = GridCells.Fixed(1),
                     contentPadding = PaddingValues(start = 7.5.dp, bottom = 100.dp),
@@ -200,13 +221,14 @@ fun CreateVoteActivity(id_group: Int) {
                                 .padding(5.dp)
                         ) {
                             optionsStr.add(a,"")
-                            TextField(
+                            OutlinedTextField(
                                 value = b.value,
                                 onValueChange = {
                                     b.value = it
                                     optionsStr[a] = b.value
                                 },
                                 label = { Text("Option - " + (a+1).toString(), color = Black) },
+                                colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = Color.Gray, cursorColor = Color.Gray),
                                 modifier = Modifier
                                     .fillMaxWidth()
                             )
@@ -239,4 +261,3 @@ fun CreateVoteActivity(id_group: Int) {
             }
     )
 }
-

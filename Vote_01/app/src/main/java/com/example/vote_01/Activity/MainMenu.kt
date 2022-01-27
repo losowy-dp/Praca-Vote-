@@ -8,60 +8,62 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.vote_01.Fragment.BottomMenuContent
 import com.example.vote_01.Fragment.ButtonGroup
+import com.example.vote_01.Fragment.ToastComp
 import com.example.vote_01.Fragment.standartQuad
 import com.example.vote_01.R
 import com.example.vote_01.ui.theme.*
 
 @ExperimentalFoundationApi
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
         Column {
-            ListGroup(groups = listOf(
+            ListGroup(navController = navController,groups = listOf(
                 ButtonGroup(
-                    title = "Me group 1",
+                    title = "My group 1",
                     DarkYellow,
                     Yellow,
                     LightYellow
                 ),
                 ButtonGroup(
-                    title = "Me group 2",
+                    title = "My group 2",
                     DarkRed,
                     Red,
                     LightRed
                 ),
                 ButtonGroup(
-                    title = "Me group 3",
+                    title = "My group 3",
                     DarkBlue,
                     Blue,
                     LightBlue
                 ),
                 ButtonGroup(
-                    title = "Me group 4",
+                    title = "My group 4",
                     DarkBlue,
                     Blue,
                     LightBlue
                 ),
                 ButtonGroup(
-                    title = "Me group 5",
+                    title = "5 Rok \nGrupa 3",
                     DarkGreen,
                     Green,
                     LightGreen
@@ -77,7 +79,7 @@ fun HomeScreen() {
 
 @ExperimentalFoundationApi
 @Composable
-fun ListGroup(groups: List<ButtonGroup>) {
+fun ListGroup(navController: NavController,groups: List<ButtonGroup>) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
@@ -90,7 +92,6 @@ fun ListGroup(groups: List<ButtonGroup>) {
                         style = MaterialTheme.typography.h3,
                         color = WhiteText,
                         modifier = Modifier
-                            .padding(15.dp)
                             .align(Alignment.CenterHorizontally)
                     )
                 }
@@ -104,7 +105,7 @@ fun ListGroup(groups: List<ButtonGroup>) {
                 items(groups.size + 1)
                 {
                     if (it != groups.size)
-                        groupBlock(buttonGroup = groups[it])
+                        groupBlock(navController = navController, buttonGroup = groups[it])
                     else
                         newGroup()
                 }
@@ -115,7 +116,7 @@ fun ListGroup(groups: List<ButtonGroup>) {
 //Create item group block
 
 @Composable
-fun groupBlock(buttonGroup: ButtonGroup) {
+fun groupBlock(navController: NavController,buttonGroup: ButtonGroup) {
     BoxWithConstraints(modifier = Modifier
         .padding(7.5.dp)
         .aspectRatio(1f)
@@ -188,7 +189,7 @@ fun groupBlock(buttonGroup: ButtonGroup) {
                 fontSize = 18.sp,
                 modifier = Modifier
                     .clickable {
-                        //todo group actyvity
+                        navController.navigate("Open_Group")
                     }
                     .align(Alignment.BottomEnd)
                     .clip(RoundedCornerShape(10.dp))
@@ -199,14 +200,19 @@ fun groupBlock(buttonGroup: ButtonGroup) {
     }
 }
 
+
+
 @Composable
 fun newGroup() {
+    //open Dialog for create group
+    val openDialog = remember { mutableStateOf(false)  }
     BoxWithConstraints(modifier = Modifier
         .padding(7.5.dp)
         .aspectRatio(1f)
         .clip(RoundedCornerShape(10.dp))
         .background(WhiteText)
-    ) {Box(
+    ) {
+        Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(15.dp)
@@ -226,13 +232,63 @@ fun newGroup() {
             modifier = Modifier
                 .clickable {
                     //todo new group actyvity
+                    openDialog.value = true
                 }
                 .align(Alignment.Center)
                 .clip(RoundedCornerShape(50.dp))
                 .background(AppbarColor)
                 .padding(vertical = 6.dp, horizontal = 15.dp)
+            )
+        }
+    }
+
+    //dialog for create group
+    if (openDialog.value) {
+        val context = LocalContext.current
+        var nameNewGropup = rememberSaveable { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = {
+                openDialog.value = false
+            },
+            title = {
+                Text(text = "Create Group", modifier = Modifier.padding(bottom = 10.dp))
+            },
+            text = {
+                OutlinedTextField(
+                    value = nameNewGropup.value,
+                    onValueChange = {
+                        nameNewGropup.value = it
+                    },
+                    label = { Text("Name your group", color = Color.Black) },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = Color.Gray),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if(nameNewGropup.value != ""){
+                            openDialog.value = false}
+                        else{
+
+                            ToastComp(context,"Type name group")
+                        }
+                    }, colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)) {
+                    Text("Create")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        openDialog.value = false
+                    }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.LightGray)) {
+                    Text("Cancel")
+                 }
+            }
         )
-    }}
+    }
 }
 
 @Composable
@@ -253,7 +309,7 @@ fun BottomMenu(
         modifier = modifier
             .fillMaxWidth()
             .background(DarkBlue)
-            .padding(15.dp)
+            .padding(1.dp)
     ){
         items.forEachIndexed { index, item ->
             BottomMenuItem(
@@ -291,13 +347,12 @@ fun BottomMenuItem(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
                 .background(if (isSelected) activeHileghtColor else Color.Transparent)
-                .padding(10.dp)
         ){
             Icon(painter = painterResource(id = item.iconId),
                 contentDescription = item.title,
                 tint = if(isSelected) activeTextColor else inactiveTextColor,
                 modifier = Modifier
-                    .size(20.dp))
+                    .size(60.dp))
         }
         Text(
             text = item.title,

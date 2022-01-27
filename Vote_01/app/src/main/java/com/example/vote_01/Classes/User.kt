@@ -1,8 +1,7 @@
 package com.example.vote_01.Classes
 
-class User (
+data class User (
     var id: Int,
+    var administrator: Boolean,
     var name: String
-        )
-{
-}
+)

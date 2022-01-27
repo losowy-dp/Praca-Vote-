@@ -8,6 +8,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import com.example.vote_01.Classes.Group
 import com.example.vote_01.Classes.User
+import com.example.vote_01.Navigator.Navigation
 import com.example.vote_01.ui.theme.*
 
 class MainActivity : ComponentActivity() {
@@ -17,9 +18,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Vote_01Theme {
-                //HomeScreen()
-                //VoteInGroup(Group(1,"asd",null ,null , User(1,"Alosha")),true)
-                CreateVoteActivity(id_group = 25)
+                Navigation()
             }
         }
     }
