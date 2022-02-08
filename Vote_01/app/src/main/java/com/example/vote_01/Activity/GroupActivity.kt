@@ -1,5 +1,6 @@
 package com.example.vote_01.Activity
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -14,22 +15,22 @@ import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.vote_01.Classes.Group
 import com.example.vote_01.Classes.User
 import com.example.vote_01.Fragment.ResultVote
 import com.example.vote_01.Fragment.VoteFragment
+import com.example.vote_01.ViewModel.GroupViewModel
 import com.example.vote_01.ui.theme.*
 
 
@@ -41,22 +42,25 @@ enum class DrawerValue {
 @RequiresApi(Build.VERSION_CODES.N)
 @ExperimentalFoundationApi
 @Composable
-fun GroupActivity(navController: NavController,Admin: Boolean, EndedVote:List<ResultVote>, Vote:List<VoteFragment>) {
+fun GroupActivity(navController: NavController,Admin: Boolean, EndedVote:List<ResultVote>, Vote:List<VoteFragment>,idUser: String,idGroup: String,viewModel: GroupViewModel)
+{
     Box( modifier = Modifier
         .fillMaxSize()
     ) {
         //todo view on last vote
         if(EndedVote.size + Vote.size == 0)
         {
-            //todo test this messenge
             Box(modifier = Modifier.fillMaxSize())
             Text(
                 text = "There was no vote in this group",
-                style = MaterialTheme.typography.h4,
+                style = MaterialTheme.typography.h5,
+                color = Color.Gray,
                 modifier = Modifier.align(Alignment.Center)
             )
         }
         else{
+            val idVote = remember {viewModel.idActive}
+            val ansver = remember {viewModel.AnsverVote}
         LazyVerticalGrid(
             cells = GridCells.Fixed(1),
             modifier = Modifier
@@ -70,9 +74,18 @@ fun GroupActivity(navController: NavController,Admin: Boolean, EndedVote:List<Re
             }
             items(Vote.size)
             {
-                Vote[it].VoteToCompose(Admin)
+                if(!ansver.isEmpty()) {
+                    if (idVote[it] in ansver)
+                        Vote[it].VoteToCompose(navController,idGroup,Admin, true, idVote[it],idUser,viewModel)
+                    else
+                        Vote[it].VoteToCompose(navController,idGroup,Admin, false, idVote[it],idUser,viewModel)
+                }
+                else
+                {
+                    Vote[it].VoteToCompose(navController,idGroup,Admin, false, idVote[it],idUser,viewModel)
+                }
             }
-        }
+        }}
         if (Admin == true) {
             Column(
                 modifier = Modifier
@@ -95,11 +108,10 @@ fun GroupActivity(navController: NavController,Admin: Boolean, EndedVote:List<Re
             }
         }
     }
-    }
 }
 @ExperimentalFoundationApi
 @Composable
-fun GroupMenu(navController: NavController,Admin: Boolean,creator: User) {
+fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,groupUser:List<User>) {
     Box(modifier = Modifier
         .background(LightBackGray)
         .fillMaxSize()
@@ -134,25 +146,7 @@ fun GroupMenu(navController: NavController,Admin: Boolean,creator: User) {
                     style = MaterialTheme.typography.h6,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                listUsers(navController,users = listOf(
-                    User(2,false,"Marcin"),
-                    User(3,false,"Anna"),
-                    User(4,false,"Jan Kowalski"),
-                    User(5,true,"Maksym"),
-                    User(6,false,"Mateusz"),
-                    User(7,false,"Dmytro"),
-                    User(8,false,"Grzegorz"),
-                    User(9,true,"Agata"),
-                    User(10,false,"Dominik"),
-                    User(11,false,"Salma"),
-                    User(12,false,"Barbara"),
-                    User(13,false,"Jakub"),
-                    User(42,false,"Kacper"),
-                    User(21,true,"Leon"),
-                    User(132,false,"Marek"),
-                    User(134,false,"Oskar")
-                ),Admin, creator)
-                //todo take with the database
+                listUsers(navController,groupUser,Admin, creator)
             }
         }
         Column(
@@ -179,7 +173,7 @@ fun GroupMenu(navController: NavController,Admin: Boolean,creator: User) {
 
 @ExperimentalFoundationApi
 @Composable
-fun listUsers(navController: NavController,users: List<User>, Admin: Boolean,creator: User) {
+fun listUsers(navController: NavController,users: List<User>, Admin: Boolean,creator: Int) {
     Column(modifier = Modifier.fillMaxWidth()) {
         LazyVerticalGrid(
             cells = GridCells.Fixed(1),
@@ -196,7 +190,7 @@ fun listUsers(navController: NavController,users: List<User>, Admin: Boolean,cre
 }
 
 @Composable
-fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: User) {
+fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: Int) {
     //open Dialog for options user
     val openDialog = remember { mutableStateOf(false)  }
 
@@ -282,8 +276,25 @@ fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: Us
 @RequiresApi(Build.VERSION_CODES.N)
 @ExperimentalFoundationApi
 @Composable
-fun VoteInGroup(navController: NavController,group: Group,Admin: Boolean) {
+fun VoteInGroup(navController: NavController, GroupId: String,UserId: String, viewModel: GroupViewModel = hiltViewModel()) {
     val drawerState = remember { mutableStateOf(DrawerValue.Closed) }
+    viewModel.getVote(UserId.toInt(),GroupId.toInt())
+    val listaEnd = mutableListOf<ResultVote>()
+    val listaAct = mutableListOf<VoteFragment>()
+    for(i in viewModel.mapList)
+    {
+        listaEnd += ResultVote(i.key,i.value)
+    }
+    var a = 0
+    for(i in viewModel.mapActive)
+    {
+        listaAct += VoteFragment(viewModel.manyAnsver[a],i.key,i.value,viewModel.endTime[a])
+        a++
+    }
+    val GroupName = remember { viewModel.groupName }
+    val UserGroup = viewModel.users
+    val Admin = remember {viewModel.admin }
+    val creator = remember {viewModel.creator}
     Scaffold(
         topBar = {
             Box(
@@ -298,11 +309,11 @@ fun VoteInGroup(navController: NavController,group: Group,Admin: Boolean) {
                             .size(50.dp)
                             .padding(top = 20.dp, start = 15.dp)
                             .clickable {
-                                navController.navigate("MainMenu")
+                                navController.navigate("MainMenu/${UserId}")
                             }
                         )
                     Text(
-                        text = group.Name,
+                        text = GroupName.value,
                         style = MaterialTheme.typography.h4,
                         color = WhiteText,
                         modifier = Modifier
@@ -330,21 +341,14 @@ fun VoteInGroup(navController: NavController,group: Group,Admin: Boolean) {
                 val parentWidth = constraints.maxWidth
                 val parentHeight = constraints.maxHeight
                 Box {
-                    //todo Animation
-                    //todo database votes
-                    GroupActivity(navController,Admin, listOf(
-                        ResultVote("Głosowonie za starostę grupy", listOf("Marcin W.","Jaj K.","Anna T."), listOf(6,4,5)),
-                        ResultVote("Za pomocnika starosty", listOf("Marcin W.","Anna T."), listOf(6,8))
-                        ), listOf(VoteFragment(false,"Egzamin z programowania", listOf("20 stycznia","22 stycztia","2 luty")),
-                        VoteFragment(true,"Godzina egzaminu", listOf("15:20","17:00","18:30","19:20"))))
-
+                    GroupActivity(navController,Admin.value, listaEnd,listaAct,UserId,GroupId,viewModel)
                     if (drawerState.value == DrawerValue.Open) {
                         Box(
                             modifier = Modifier
                                 .size((parentWidth * 0.25).dp, parentHeight.dp)
                                 .offset(x = (parentWidth * 0.12).dp)
                         ) {
-                            GroupMenu(navController,Admin,group.Creator)
+                            GroupMenu(navController,Admin.value,creator.value, UserGroup)
                         }
                     }
                 }

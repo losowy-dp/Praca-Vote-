@@ -21,54 +21,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
+import com.example.vote_01.DataClassesForServer.CreateGroup
 import com.example.vote_01.Fragment.BottomMenuContent
 import com.example.vote_01.Fragment.ButtonGroup
 import com.example.vote_01.Fragment.ToastComp
 import com.example.vote_01.Fragment.standartQuad
 import com.example.vote_01.R
+import com.example.vote_01.ViewModel.MenuTestViewModel
 import com.example.vote_01.ui.theme.*
+
 
 @ExperimentalFoundationApi
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController,idUser: String,viewModel: MenuTestViewModel = hiltViewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
+        viewModel.loadGroup(idUser.toInt())
+        var lista = remember {viewModel.listGroup}
         Column {
-            ListGroup(navController = navController,groups = listOf(
-                ButtonGroup(
-                    title = "My group 1",
-                    DarkYellow,
-                    Yellow,
-                    LightYellow
-                ),
-                ButtonGroup(
-                    title = "My group 2",
-                    DarkRed,
-                    Red,
-                    LightRed
-                ),
-                ButtonGroup(
-                    title = "My group 3",
-                    DarkBlue,
-                    Blue,
-                    LightBlue
-                ),
-                ButtonGroup(
-                    title = "My group 4",
-                    DarkBlue,
-                    Blue,
-                    LightBlue
-                ),
-                ButtonGroup(
-                    title = "5 Rok \nGrupa 3",
-                    DarkGreen,
-                    Green,
-                    LightGreen
-                )
-            ))
+            ListGroup(navController = navController, idUser = idUser, viewModel)
         }
         BottomMenu(items = listOf(
             BottomMenuContent("Groups", R.mipmap.ic_list_foreground),
@@ -79,7 +55,7 @@ fun HomeScreen(navController: NavController) {
 
 @ExperimentalFoundationApi
 @Composable
-fun ListGroup(navController: NavController,groups: List<ButtonGroup>) {
+fun ListGroup(navController: NavController,idUser: String,viewModel: MenuTestViewModel) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
@@ -102,12 +78,12 @@ fun ListGroup(navController: NavController,groups: List<ButtonGroup>) {
                 modifier = Modifier.fillMaxHeight()
             )
             {
-                items(groups.size + 1)
+                items(viewModel.listGroup.size +1 )
                 {
-                    if (it != groups.size)
-                        groupBlock(navController = navController, buttonGroup = groups[it])
+                    if (it != viewModel.listGroup.size && viewModel.listGroup.size!=0)
+                        groupBlock(navController = navController, buttonGroup = viewModel.listGroup[it],idGroup = viewModel.listGroup[it].idGroup,idUser)
                     else
-                        newGroup()
+                        newGroup(navController,idUser,viewModel)
                 }
             }
         }
@@ -116,7 +92,7 @@ fun ListGroup(navController: NavController,groups: List<ButtonGroup>) {
 //Create item group block
 
 @Composable
-fun groupBlock(navController: NavController,buttonGroup: ButtonGroup) {
+fun groupBlock(navController: NavController,buttonGroup: ButtonGroup,idGroup:String,idUser:String) {
     BoxWithConstraints(modifier = Modifier
         .padding(7.5.dp)
         .aspectRatio(1f)
@@ -189,7 +165,7 @@ fun groupBlock(navController: NavController,buttonGroup: ButtonGroup) {
                 fontSize = 18.sp,
                 modifier = Modifier
                     .clickable {
-                        navController.navigate("Open_Group")
+                        navController.navigate("Open_Group/${idGroup}/${idUser}")
                     }
                     .align(Alignment.BottomEnd)
                     .clip(RoundedCornerShape(10.dp))
@@ -203,7 +179,7 @@ fun groupBlock(navController: NavController,buttonGroup: ButtonGroup) {
 
 
 @Composable
-fun newGroup() {
+fun newGroup(navController: NavController,idUser: String, viewModel: MenuTestViewModel) {
     //open Dialog for create group
     val openDialog = remember { mutableStateOf(false)  }
     BoxWithConstraints(modifier = Modifier
@@ -231,7 +207,6 @@ fun newGroup() {
             fontSize = 25.sp,
             modifier = Modifier
                 .clickable {
-                    //todo new group actyvity
                     openDialog.value = true
                 }
                 .align(Alignment.Center)
@@ -270,9 +245,12 @@ fun newGroup() {
                 Button(
                     onClick = {
                         if(nameNewGropup.value != ""){
-                            openDialog.value = false}
+                            viewModel.addGroup(CreateGroup(nameNewGropup.value,idUser))
+                            openDialog.value = false
+                            navController.popBackStack()
+                            navController.navigate("MainMenu/${idUser}")
+                        }
                         else{
-
                             ToastComp(context,"Type name group")
                         }
                     }, colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)) {

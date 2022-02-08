@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.unit.dp
+import com.example.DataClasses.OptionDataClass
 import com.example.vote_01.Activity.groupBlock
 import com.example.vote_01.Activity.newGroup
 import com.example.vote_01.ui.theme.LightBackGray
@@ -20,8 +21,7 @@ import com.example.vote_01.ui.theme.LightBackGray
 
 class ResultVote (
     val description:String,
-    val options:List<String>,
-    val results:List<Int>
+    val mapOption: MutableList<OptionDataClass>
 ){
     @ExperimentalFoundationApi
     @Composable
@@ -47,17 +47,18 @@ class ResultVote (
                 )
                 Column(modifier = Modifier.fillMaxSize()) {
                     var i = 0
-                    options.forEach()
+                    //options.forEach()
+                    mapOption.forEach()
                     {
                         Box(modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                text = it,
+                                text = it.option_name,
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
                                     .padding(10.dp, 0.dp, 0.dp, 10.dp)
                             )
                             Text(
-                                text = results[i].toString(),
+                                text = it.option_value.toString(),
                                 modifier = Modifier.align(Alignment.TopEnd)
                                     .padding(0.dp, 0.dp, 10.dp, 0.dp)
                             )

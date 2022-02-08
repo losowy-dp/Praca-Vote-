@@ -1,5 +1,6 @@
 package com.example.vote_01.Activity
 
+import android.util.Patterns
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.sourceInformation
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,11 +25,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.vote_01.Classes.UserRegistration
+import com.example.vote_01.ExtraFuncrion.VerificationRegistration
+import com.example.vote_01.ViewModel.RegistrationViewModel
 import com.example.vote_01.ui.theme.LightBlue
+import com.example.vote_01.ui.theme.LightRed
+import okhttp3.internal.tls.OkHostnameVerifier.verify
 
 @Composable
-fun Registration(navController: NavController) {
+fun Registration(navController: NavController,viewModel:RegistrationViewModel = hiltViewModel()) {
     Box(modifier = Modifier.fillMaxSize())
     {
         Icon(imageVector = Icons.Outlined.ArrowBack, contentDescription = null,
@@ -177,7 +185,13 @@ fun Registration(navController: NavController) {
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = 5.dp)
             )
-            OutlinedTextField(
+            Text(
+                text = aboutMe.value,
+                style = MaterialTheme.typography.h5,
+                color = LightRed,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            /*OutlinedTextField(
                 value = aboutMe.value,
                 onValueChange = {
                     aboutMe.value = it
@@ -188,10 +202,27 @@ fun Registration(navController: NavController) {
                     .height(120.dp)
                     .padding(bottom = 5.dp)
                     .align(Alignment.CenterHorizontally)
-            )
+            )*/
+            val isLoading = remember { viewModel.isLoading }
+            val erorr = remember { viewModel.loadError }
             Button(
                 onClick = {
-
+                    aboutMe.value = ""
+                    val a = VerificationRegistration(firstName.value,lastName.value,email.value, passwordOne.value,passwordTwo.value)
+                    if(a == "")
+                    {
+                        val check = viewModel.registratinModel(UserRegistration(email.value,firstName.value,lastName.value,company.value,numberPhone.value,passwordOne.value))
+                        while(isLoading.value){ }
+                        if (erorr.value == "successful") {
+                            navController.navigate("LoginActivity")
+                        }
+                        else
+                            aboutMe.value = "This email is using"
+                    }
+                    else
+                    {
+                        aboutMe.value = a
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue),
                 modifier = Modifier
@@ -199,7 +230,7 @@ fun Registration(navController: NavController) {
                     .fillMaxWidth(0.8f)
                     .align(Alignment.CenterHorizontally)
             ) {
-                Text("Accept",color = Color.White,style = MaterialTheme.typography.h5)
+                Text("Accept",color = Color.White,style = MaterialTheme.typography.h6)
             }
 
         }

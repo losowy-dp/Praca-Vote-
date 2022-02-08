@@ -6,11 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
-import com.example.vote_01.Classes.Group
-import com.example.vote_01.Classes.User
 import com.example.vote_01.Navigator.Navigation
 import com.example.vote_01.ui.theme.*
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.N)
     @ExperimentalFoundationApi

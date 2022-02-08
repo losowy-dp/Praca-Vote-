@@ -4,12 +4,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.vote_01.Activity.*
-import com.example.vote_01.Classes.Group
-import com.example.vote_01.Classes.User
 
 @RequiresApi(Build.VERSION_CODES.N)
 @ExperimentalFoundationApi
@@ -21,11 +21,13 @@ fun Navigation() {
         {
             LoginActivity(navController)
         }
-        composable("MainMenu"){
-            HomeScreen(navController)
+        composable("MainMenu/{userId}", arguments = listOf(navArgument("userId"){
+            type = NavType.StringType
+        })){
+            HomeScreen(navController,it.arguments?.getString("userId").toString())
         }
-        composable("Open_Group"){
-            VoteInGroup(navController,Group(1,"Rok 5 Grupa 3",null ,null , User(1,true,"Alosha")),true)
+        composable("Open_Group/{GroupId}/{UserId}"){
+            VoteInGroup(navController = navController, GroupId = it.arguments?.getString("GroupId").toString(), UserId = it.arguments?.getString("UserId").toString())
         }
         composable("Create_New_Vote")
         {

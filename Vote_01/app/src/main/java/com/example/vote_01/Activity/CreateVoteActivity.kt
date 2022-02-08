@@ -77,6 +77,7 @@ fun CreateVoteActivity(navController: NavController, id_group: Int) {
                                 }else
                                 {
                                     //todo create vote
+                                    navController.popBackStack()
                                     navController.navigate("Open_Group")
                                 }
                             }

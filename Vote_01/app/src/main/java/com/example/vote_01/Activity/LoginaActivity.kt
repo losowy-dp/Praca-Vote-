@@ -1,7 +1,6 @@
 package com.example.vote_01.Activity
 
-import android.graphics.drawable.Icon
-import androidx.compose.foundation.background
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -13,17 +12,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.vote_01.DataClassesForServer.LoginData
+import com.example.vote_01.Fragment.ToastComp
+import com.example.vote_01.ViewModel.LoginViewModel
+import com.example.vote_01.ViewModel.RegistrationViewModel
 import com.example.vote_01.ui.theme.LightBlue
 import com.example.vote_01.ui.theme.LightRed
 
 @Composable
-fun LoginActivity(navController: NavController) {
+fun LoginActivity(navController: NavController,viewModel: LoginViewModel = hiltViewModel()) {
     Box(modifier = Modifier.fillMaxSize()){
         var errorText = remember { mutableStateOf("")}
         Column(modifier = Modifier.align(Alignment.Center)) {
@@ -84,12 +90,22 @@ fun LoginActivity(navController: NavController) {
                     .fillMaxWidth(0.65f)
                     .padding(bottom = 20.dp)
             )
+            val isLoading = remember { viewModel.isLoading }
+            val id = remember { viewModel.id }
             Button(
                 onClick = {
+                    errorText.value = ""
                     if(login.value.isNotBlank() && password.value.isNotBlank())
                     {
-                        //todo validation the database
-                        navController.navigate("MainMenu")
+                        val tryLogin = viewModel.login(LoginData(login.value, password.value))
+                        while(isLoading.value){ }
+                        if (id.value != "") {
+                            navController.popBackStack()
+                            navController.navigate("MainMenu/${id.value}")
+                        }
+                        else{
+                            errorText.value = "Incorrect data"
+                        }
                     } else{
                         errorText.value = "Type email and password"
                     }
@@ -106,14 +122,20 @@ fun LoginActivity(navController: NavController) {
                 .fillMaxWidth(0.65f)
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 15.dp)){
-                Divider(modifier = Modifier.fillMaxWidth(0.425f).align(Alignment.CenterVertically).height(2.dp))
+                Divider(modifier = Modifier
+                    .fillMaxWidth(0.425f)
+                    .align(Alignment.CenterVertically)
+                    .height(2.dp))
                 Text(
                     text = " or ",
                     color = Color.LightGray,
                     style = MaterialTheme.typography.h5,
                     modifier = Modifier.align(Alignment.Top)
                 )
-                Divider(modifier = Modifier.fillMaxWidth().align(Alignment.CenterVertically).height(2.dp))
+                Divider(modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterVertically)
+                    .height(2.dp))
             }
             Button(
                 onClick = { navController.navigate("Registration") },
