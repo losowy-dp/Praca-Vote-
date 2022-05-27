@@ -2,10 +2,7 @@ package com.example.vote_01.Server
 
 import com.example.vote_01.Classes.User
 import com.example.vote_01.Classes.UserRegistration
-import com.example.vote_01.DataClassesForServer.CheckAdminForServer
-import com.example.vote_01.DataClassesForServer.CreateGroup
-import com.example.vote_01.DataClassesForServer.LoginData
-import com.example.vote_01.DataClassesForServer.setAnsver
+import com.example.vote_01.DataClassesForServer.*
 import com.example.vote_01.Response.*
 import retrofit2.Response
 import retrofit2.http.Body
@@ -56,7 +53,19 @@ interface ServerApi {
     @POST("/closeVote")
     suspend fun closeVote(@Body idVote:Int): Response<SimpleResponse>
 
+    @POST("/createVote")
+    suspend fun createVote(@Body data:CreateVote): Response<SimpleResponse>
+
+    @POST("/setModerator")
+    suspend fun setModerator(@Body data:setModerator): Response<SimpleResponse>
+
+    @POST("/kickUser")
+    suspend fun kickUser(@Body data:setModerator): Response<SimpleResponse>
+
+    @POST("/inviteUser")
+    suspend fun inviteUser(@Body data:inviteUser): Response<SimpleResponse>
+
     companion object {
-        const val BASE_URL = "http://10.206.2.131:8080"
+        const val BASE_URL = "http://10.196.0.20:8080"
     }
 }

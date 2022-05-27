@@ -47,7 +47,6 @@ class ResultVote (
                 )
                 Column(modifier = Modifier.fillMaxSize()) {
                     var i = 0
-                    //options.forEach()
                     mapOption.forEach()
                     {
                         Box(modifier = Modifier.fillMaxWidth()) {

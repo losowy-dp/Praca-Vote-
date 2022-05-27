@@ -2,6 +2,7 @@ package com.example.vote_01.Activity
 
 import android.annotation.SuppressLint
 import android.os.Build
+import android.util.Patterns
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -18,17 +19,23 @@ import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.vote_01.Classes.Group
 import com.example.vote_01.Classes.User
+import com.example.vote_01.DataClassesForServer.CreateGroup
+import com.example.vote_01.DataClassesForServer.inviteUser
+import com.example.vote_01.DataClassesForServer.setModerator
 import com.example.vote_01.Fragment.ResultVote
+import com.example.vote_01.Fragment.ToastComp
 import com.example.vote_01.Fragment.VoteFragment
 import com.example.vote_01.ViewModel.GroupViewModel
 import com.example.vote_01.ui.theme.*
@@ -95,7 +102,7 @@ fun GroupActivity(navController: NavController,Admin: Boolean, EndedVote:List<Re
                     .padding(5.dp)
                     .clickable
                     {
-                        navController.navigate("Create_New_Vote")
+                        navController.navigate("Create_New_Vote/${idGroup}/${idUser}")
                     }
                     .align(Alignment.BottomEnd)
             ) {
@@ -111,7 +118,7 @@ fun GroupActivity(navController: NavController,Admin: Boolean, EndedVote:List<Re
 }
 @ExperimentalFoundationApi
 @Composable
-fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,groupUser:List<User>) {
+fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,idGroup: String,idUser: String,viewModel: GroupViewModel) {
     Box(modifier = Modifier
         .background(LightBackGray)
         .fillMaxSize()
@@ -126,7 +133,7 @@ fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,groupUser
                 .padding(10.dp)
                 .clickable
                 {
-                    //todo new user
+                    viewModel.openDialogInvite.value = true
                 }
             ) {
                 Text(
@@ -146,7 +153,7 @@ fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,groupUser
                     style = MaterialTheme.typography.h6,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                listUsers(navController,groupUser,Admin, creator)
+                listUsers(navController,Admin, creator, idGroup, viewModel)
             }
         }
         Column(
@@ -156,7 +163,9 @@ fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,groupUser
                 .padding(10.dp)
                 .clickable
                 {
-                    //todo leave whis group
+                    viewModel.kickUser(setModerator(idGroup.toInt(), idUser.toInt()))
+                    navController.popBackStack()
+                    navController.navigate("MainMenu/${idUser}")
                 }
                 .align(Alignment.BottomEnd)
         ) {
@@ -173,7 +182,8 @@ fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,groupUser
 
 @ExperimentalFoundationApi
 @Composable
-fun listUsers(navController: NavController,users: List<User>, Admin: Boolean,creator: Int) {
+fun listUsers(navController: NavController, Admin: Boolean,creator: Int,idGroup: String,viewModel: GroupViewModel) {
+    val users =  remember { viewModel.users }
     Column(modifier = Modifier.fillMaxWidth()) {
         LazyVerticalGrid(
             cells = GridCells.Fixed(1),
@@ -183,17 +193,18 @@ fun listUsers(navController: NavController,users: List<User>, Admin: Boolean,cre
         {
             items(users.size)
             {
-                userBlock(navController,user = users[it],Admin,creator)
+                userBlock(navController,user = users[it],Admin,creator, idGroup, viewModel)
             }
         }
     }
 }
 
 @Composable
-fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: Int) {
+fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: Int,idGroup: String,viewModel: GroupViewModel) {
     //open Dialog for options user
     val openDialog = remember { mutableStateOf(false)  }
-
+    val openDialogInvite = remember { viewModel.openDialogInvite  }
+    val resultInvite = remember { viewModel.resultInviteBool  }
     BoxWithConstraints(modifier = Modifier
         .padding(2.dp)
         .clip(RoundedCornerShape(5.dp))
@@ -231,24 +242,28 @@ fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: In
             )
         }
     }
-    if (openDialog.value) {
+    if(openDialog.value) {
         AlertDialog(
             onDismissRequest = { openDialog.value = false },
             title = { Text(text = "User options", modifier = Modifier.padding(bottom = 10.dp)) },
                 confirmButton = {
-                    if(!user.administrator && Admin) {
+                    if(!user.administrator && Admin && user.id != creator) {
                         Button(
                             onClick = {
-                                //todo add moderator
+                                viewModel.setModerator(setModerator(idGroup.toInt(),user.id))
+                                viewModel.refreshUser(idGroup.toInt())
                                 openDialog.value = false
+                                viewModel.drawerState.value = DrawerValue.Closed
                             }, colors = ButtonDefaults.buttonColors(backgroundColor = LightYellow)
                         ) {
                             Text("Give moderator mode this user")
                         }
                         Button(
                             onClick = {
-                                //todo kick user
+                                viewModel.kickUser(setModerator(idGroup.toInt(),user.id))
                                 openDialog.value = false
+                                viewModel.refreshUser(idGroup.toInt())
+                                viewModel.drawerState.value = DrawerValue.Closed
                             },
                             colors = ButtonDefaults.buttonColors(backgroundColor = LightRed)
                         ) {
@@ -271,13 +286,100 @@ fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: In
                 }
         )
     }
+    if(openDialogInvite.value){
+        val context = LocalContext.current
+        var email = rememberSaveable { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = {
+                openDialogInvite.value = false
+            },
+            title = {
+                Text(text = "Invite User", modifier = Modifier.padding(bottom = 10.dp))
+            },
+            text = {
+                OutlinedTextField(
+                    value = email.value,
+                    onValueChange = {
+                        email.value = it
+                    },
+                    label = { Text("Email new User", color = Color.Black) },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = Color.Gray),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if(email.value != "" && Patterns.EMAIL_ADDRESS.matcher(email.value).matches()){
+                            viewModel.inviteUser(inviteUser(idGroup.toInt(),email.value))
+                            openDialogInvite.value = false
+                            resultInvite.value = true
+                        }
+                        else{
+                            ToastComp(context,"Type correct Email User")
+                        }
+                    }, colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)) {
+                    Text("Invite")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        openDialogInvite.value = false
+                    }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.LightGray)) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    if(resultInvite.value){
+        val context = LocalContext.current
+        var email = rememberSaveable { mutableStateOf("") }
+        val result = remember { viewModel.resultInvite }
+        AlertDialog(
+            onDismissRequest = {
+                resultInvite.value = false
+            },
+            text = {
+                Text(
+                    text = result.value,
+                    style = MaterialTheme.typography.h5,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.refreshUser(idGroup.toInt())
+                        resultInvite.value = false
+                        viewModel.drawerState.value = DrawerValue.Closed
+                    }, colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        resultInvite.value = false
+                        openDialogInvite.value = true
+                    }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.LightGray)) {
+                    Text("Back to invite")
+                }
+            }
+        )
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.N)
 @ExperimentalFoundationApi
 @Composable
 fun VoteInGroup(navController: NavController, GroupId: String,UserId: String, viewModel: GroupViewModel = hiltViewModel()) {
-    val drawerState = remember { mutableStateOf(DrawerValue.Closed) }
+    val drawerState = remember { viewModel.drawerState }
     viewModel.getVote(UserId.toInt(),GroupId.toInt())
     val listaEnd = mutableListOf<ResultVote>()
     val listaAct = mutableListOf<VoteFragment>()
@@ -292,7 +394,6 @@ fun VoteInGroup(navController: NavController, GroupId: String,UserId: String, vi
         a++
     }
     val GroupName = remember { viewModel.groupName }
-    val UserGroup = viewModel.users
     val Admin = remember {viewModel.admin }
     val creator = remember {viewModel.creator}
     Scaffold(
@@ -348,7 +449,7 @@ fun VoteInGroup(navController: NavController, GroupId: String,UserId: String, vi
                                 .size((parentWidth * 0.25).dp, parentHeight.dp)
                                 .offset(x = (parentWidth * 0.12).dp)
                         ) {
-                            GroupMenu(navController,Admin.value,creator.value, UserGroup)
+                            GroupMenu(navController,Admin.value,creator.value, GroupId,UserId,viewModel)
                         }
                     }
                 }

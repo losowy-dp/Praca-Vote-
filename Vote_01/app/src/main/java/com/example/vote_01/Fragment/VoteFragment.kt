@@ -207,8 +207,6 @@ fun checkBoxVote(ansver:Boolean, idVote: Int,idUser:String, viewModel: GroupView
                                 if(i.value == 1)
                                     list += i.key
                             }
-                            println(list.sorted())
-                            println("AAAAAAAAAA")
                             viewModel.setAnsver(setAnsver(idVote.toString(),idUser, list))
                             isReady.value = true
                         }

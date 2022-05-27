@@ -29,9 +29,9 @@ fun Navigation() {
         composable("Open_Group/{GroupId}/{UserId}"){
             VoteInGroup(navController = navController, GroupId = it.arguments?.getString("GroupId").toString(), UserId = it.arguments?.getString("UserId").toString())
         }
-        composable("Create_New_Vote")
+        composable("Create_New_Vote/{GroupId}/{UserId}")
         {
-            CreateVoteActivity(navController,id_group = 25)
+            CreateVoteActivity(navController,it.arguments?.getString("GroupId").toString(),it.arguments?.getString("UserId").toString())
         }
         composable("Registration")
         {

@@ -248,7 +248,7 @@ fun newGroup(navController: NavController,idUser: String, viewModel: MenuTestVie
                             viewModel.addGroup(CreateGroup(nameNewGropup.value,idUser))
                             openDialog.value = false
                             navController.popBackStack()
-                            navController.navigate("MainMenu/${idUser}")
+                            navController.navigate("MainMenu/${idUser.toInt()}")
                         }
                         else{
                             ToastComp(context,"Type name group")

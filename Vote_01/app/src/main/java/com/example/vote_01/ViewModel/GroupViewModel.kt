@@ -3,13 +3,17 @@ package com.example.vote_01.ViewModel
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.DataClasses.LinkDataClass
 import com.example.DataClasses.OptionDataClass
+import com.example.vote_01.Activity.DrawerValue
 import com.example.vote_01.Classes.User
 import com.example.vote_01.DataClassesForServer.CheckAdminForServer
+import com.example.vote_01.DataClassesForServer.inviteUser
 import com.example.vote_01.DataClassesForServer.setAnsver
+import com.example.vote_01.DataClassesForServer.setModerator
 import com.example.vote_01.Server.ServerApi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +34,13 @@ class GroupViewModel @Inject constructor(
     var users = mutableListOf<User>()
     var creator = mutableStateOf(0)
     var AnsverVote = mutableListOf<Int>()
+
+    val resultInvite = mutableStateOf("")
+
+    val openDialogInvite = mutableStateOf(false)
+    val resultInviteBool = mutableStateOf(false)
+
+    val drawerState = mutableStateOf(DrawerValue.Closed)
 
     fun getVote(idUser:Int,idGroup: Int)
     {
@@ -83,6 +94,19 @@ class GroupViewModel @Inject constructor(
         }
     }
 
+    fun refreshUser(idGroup: Int){
+        users.clear()
+        viewModelScope.launch(Dispatchers.Main)
+        {
+            val requestUser = api.getUsers(id_group = idGroup)
+            if (requestUser.isSuccessful) {
+                if (requestUser.body()!!.successful) {
+                    users = requestUser.body()!!.message
+                }
+            }
+        }
+    }
+
     fun setAnsver(data: setAnsver){
         viewModelScope.launch(Dispatchers.Main)
         {
@@ -94,6 +118,36 @@ class GroupViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Main)
         {
             val requstCloseVote = api.closeVote(idVote)
+        }
+    }
+
+    fun setModerator(data:setModerator) {
+        viewModelScope.launch(Dispatchers.Main)
+        {
+            api.setModerator(data)
+        }
+    }
+
+    fun kickUser(data: setModerator) {
+        viewModelScope.launch(Dispatchers.Main)
+        {
+            api.kickUser(data)
+        }
+    }
+
+    fun inviteUser(data:inviteUser){
+        resultInvite.value = ""
+        viewModelScope.launch(Dispatchers.Main)
+        {
+            val a = api.inviteUser(data)
+            if(a.isSuccessful){
+                if(a.body()?.successful == true)
+                    resultInvite.value = "User join to group"
+                else
+                    resultInvite.value = "Not Find User"
+            }
+            else
+                resultInvite.value = "Not Find User"
         }
     }
 }

@@ -20,8 +20,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.vote_01.DataClassesForServer.CreateVote
 import com.example.vote_01.Fragment.ToastComp
+import com.example.vote_01.ViewModel.CreateVoteViewModel
+import com.example.vote_01.ViewModel.GroupViewModel
 import com.example.vote_01.ui.theme.*
 import java.sql.Time
 import java.time.format.TextStyle
@@ -29,8 +33,9 @@ import androidx.compose.runtime.remember as remember
 
 @ExperimentalFoundationApi
 @Composable
-fun CreateVoteActivity(navController: NavController, id_group: Int) {
+fun CreateVoteActivity(navController: NavController, id_group: String, id_User: String, viewModel: CreateVoteViewModel = hiltViewModel()) {
     var text = rememberSaveable { mutableStateOf("") }
+    val selectedOption = remember { mutableStateOf(false) }
     var day = rememberSaveable { mutableStateOf(0) }
     var hour = rememberSaveable { mutableStateOf(0) }
     var minute = rememberSaveable { mutableStateOf(0) }
@@ -63,22 +68,33 @@ fun CreateVoteActivity(navController: NavController, id_group: Int) {
                     .padding(5.dp)
                     .clickable
                     {
-                        if(text.value == "")
-                        {
-                            ToastComp(context,"Name can not be empty")
-                        }else{
-                            if(day.value == 0 && hour.value == 0 && minute.value == 0)
-                            {
-                                ToastComp(context,"Time can not be 0")
-                            }
-                            else{
-                                if(optionsStr[1].isBlank()){
-                                    ToastComp(context,"Options can not be empty")
-                                }else
-                                {
-                                    //todo create vote
+                        if (text.value == "") {
+                            ToastComp(context, "Name can not be empty")
+                        } else {
+                            if (day.value == 0 && hour.value == 0 && minute.value == 0) {
+                                ToastComp(context, "Time can not be 0")
+                            } else {
+                                if (optionsStr[0].isBlank()) {
+                                    ToastComp(context, "Options can not be empty")
+                                } else {
+                                    val time =
+                                        day.value.toString() + " " + hour.value.toString() + " " + minute.value.toString()
+                                    var lista = mutableListOf<String>()
+                                    for (j in optionsStr) {
+                                        if (j != "")
+                                            lista += j
+                                    }
+                                    viewModel.createVote(
+                                        CreateVote(
+                                            id_group?.toInt()!!,
+                                            text.value,
+                                            selectedOption.value,
+                                            time,
+                                            lista
+                                        )
+                                    )
                                     navController.popBackStack()
-                                    navController.navigate("Open_Group")
+                                    navController.navigate("Open_Group/${id_group.toString()}/${id_User.toString()}")
                                 }
                             }
                         }
@@ -107,7 +123,7 @@ fun CreateVoteActivity(navController: NavController, id_group: Int) {
                 )
             Row(modifier = Modifier.fillMaxWidth())
             {
-                val selectedOption = remember { mutableStateOf(false) }
+
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Row(modifier = Modifier
                         .align(Alignment.TopStart)
@@ -221,7 +237,7 @@ fun CreateVoteActivity(navController: NavController, id_group: Int) {
                                 .fillMaxWidth()
                                 .padding(5.dp)
                         ) {
-                            optionsStr.add(a,"")
+                            optionsStr += ""
                             OutlinedTextField(
                                 value = b.value,
                                 onValueChange = {
