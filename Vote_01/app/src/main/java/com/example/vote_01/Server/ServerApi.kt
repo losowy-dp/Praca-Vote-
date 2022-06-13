@@ -65,7 +65,10 @@ interface ServerApi {
     @POST("/inviteUser")
     suspend fun inviteUser(@Body data:inviteUser): Response<SimpleResponse>
 
+    @POST("/getUserInfo")
+    suspend fun getUserInfo(@Body id_user:Int): Response<UserInfoResponse>
+
     companion object {
-        const val BASE_URL = "http://10.196.0.20:8080"
+        const val BASE_URL = "http://10.206.0.51:8080"
     }
 }

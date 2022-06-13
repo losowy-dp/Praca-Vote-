@@ -9,22 +9,29 @@ import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.vote_01.Classes.UserRegistration
 import com.example.vote_01.DataClassesForServer.CreateGroup
+import com.example.vote_01.ExtraFuncrion.VerificationRegistration
 import com.example.vote_01.Fragment.BottomMenuContent
 import com.example.vote_01.Fragment.ButtonGroup
 import com.example.vote_01.Fragment.ToastComp
@@ -43,13 +50,90 @@ fun HomeScreen(navController: NavController,idUser: String,viewModel: MenuTestVi
     ) {
         viewModel.loadGroup(idUser.toInt())
         var lista = remember {viewModel.listGroup}
-        Column {
-            ListGroup(navController = navController, idUser = idUser, viewModel)
+        if(viewModel.menuBool.value == true) {
+            Column {
+                ListGroup(navController = navController, idUser = idUser, viewModel)
+            }
         }
-        BottomMenu(items = listOf(
+        else{
+            viewModel.getUser(idUser.toInt())
+            myProfile(viewModel,navController)
+        }
+        BottomMenu(viewModel,items = listOf(
             BottomMenuContent("Groups", R.mipmap.ic_list_foreground),
             BottomMenuContent("Profile", R.mipmap.ic_account_foreground)),
             modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+fun myProfile(viewModel: MenuTestViewModel,navController: NavController) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(modifier = Modifier
+                .background(LightBlue)
+                .fillMaxWidth()
+            ){
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        imageVector = Icons.Outlined.AccountCircle,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier
+                            .size(200.dp)
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 10.dp, bottom = 10.dp))
+                }
+            }
+            Text(
+                text = viewModel.firstName.value + " " + viewModel.lastName.value,
+                style = MaterialTheme.typography.h4,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 5.dp)
+            )
+            Text(
+                text = viewModel.company.value,
+                fontSize = 15.sp,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 20.dp)
+            )
+            Text(
+                text = "E-mail: " + viewModel.email.value,
+                style = MaterialTheme.typography.h5,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 10.dp)
+            )
+            if(viewModel.phone.value != ""){
+                Text(
+                    text = "Phone: " + viewModel.phone.value,
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                )
+            }
+            Row(modifier = Modifier
+                .fillMaxHeight()
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = 100.dp)
+            ){
+                Button(
+                    onClick = {
+                        navController.popBackStack()
+                        navController.navigate("LoginActivity")
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue),
+                    modifier = Modifier
+                        .padding(bottom = 10.dp)
+                        .fillMaxWidth(0.8f)
+                        .align(Alignment.Bottom)
+                ) {
+                    Text("Log out", color = Color.White, style = MaterialTheme.typography.h6)
+                }
+            }
+        }
     }
 }
 
@@ -81,7 +165,9 @@ fun ListGroup(navController: NavController,idUser: String,viewModel: MenuTestVie
                 items(viewModel.listGroup.size +1 )
                 {
                     if (it != viewModel.listGroup.size && viewModel.listGroup.size!=0)
-                        groupBlock(navController = navController, buttonGroup = viewModel.listGroup[it],idGroup = viewModel.listGroup[it].idGroup,idUser)
+                        groupBlock(navController = navController,
+                            buttonGroup = viewModel.listGroup[it],
+                            idGroup = viewModel.listGroup[it].idGroup,idUser)
                     else
                         newGroup(navController,idUser,viewModel)
                 }
@@ -270,7 +356,7 @@ fun newGroup(navController: NavController,idUser: String, viewModel: MenuTestVie
 }
 
 @Composable
-fun BottomMenu(
+fun BottomMenu(viewModel: MenuTestViewModel,
     items: List<BottomMenuContent>,
     modifier: Modifier = Modifier,
     activeHileghtColor: Color = LightBlue,
@@ -291,6 +377,7 @@ fun BottomMenu(
     ){
         items.forEachIndexed { index, item ->
             BottomMenuItem(
+                viewModel,
                 item = item,
                 isSelected = index == selectedItemIndex,
                 activeHileghtColor = activeHileghtColor,
@@ -304,7 +391,7 @@ fun BottomMenu(
 }
 
 @Composable
-fun BottomMenuItem(
+fun BottomMenuItem(viewModel: MenuTestViewModel,
     item: BottomMenuContent,
     isSelected: Boolean = false,
     activeHileghtColor: Color = LightBlue,
@@ -317,7 +404,8 @@ fun BottomMenuItem(
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.clickable
         {
-            onItemClick() //todo Click
+                onItemClick()
+                viewModel.menuBool.value = !viewModel.menuBool.value
         }
     ) {
         Box(

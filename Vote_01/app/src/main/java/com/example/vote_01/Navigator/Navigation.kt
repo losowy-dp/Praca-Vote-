@@ -37,5 +37,13 @@ fun Navigation() {
         {
             Registration(navController)
         }
+        composable("Open_User_Profile/{GroupId}/{UserId}/{idMain}"){
+            ProfileUser(
+                navController = navController,
+                idGroup = it.arguments?.getString("GroupId").toString(),
+                idUser = it.arguments?.getString("UserId").toString(),
+                idMain = it.arguments?.getString("idMain").toString(),
+            )
+        }
     }
 }

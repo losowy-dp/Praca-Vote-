@@ -1,6 +1,7 @@
 package com.example.vote_01.ViewModel
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vote_01.DataClassesForServer.CreateGroup
@@ -18,7 +19,30 @@ class MenuTestViewModel @Inject constructor(
 ) : ViewModel()
 {
     var listGroup = mutableStateListOf<ButtonGroup>()
+    var menuBool = mutableStateOf(true)
+    var firstName = mutableStateOf("")
+    var lastName = mutableStateOf("")
+    var company = mutableStateOf("")
+    var email = mutableStateOf("")
+    var phone = mutableStateOf("")
 
+    fun getUser(userId:Int)
+    {
+        viewModelScope.launch(Dispatchers.Main)
+        {
+            val req = api.getUserInfo(userId)
+            if(req.isSuccessful){
+                if(req.body()!!.successful)
+                {
+                    firstName.value = req.body()!!.UserInfo.first_name
+                    lastName.value = req.body()!!.UserInfo.last_name
+                    company.value = req.body()!!.UserInfo.company
+                    email.value = req.body()!!.UserInfo.email
+                    phone.value = req.body()!!.UserInfo.phone
+                }
+            }
+        }
+    }
     fun loadGroup(idUser: Int){
         viewModelScope.launch(Dispatchers.Main){
             var req = api.getGropeName(idUser)

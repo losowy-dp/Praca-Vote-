@@ -153,7 +153,7 @@ fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,idGroup: 
                     style = MaterialTheme.typography.h6,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                listUsers(navController,Admin, creator, idGroup, viewModel)
+                listUsers(navController,Admin, creator, idGroup, viewModel,idUser)
             }
         }
         Column(
@@ -182,7 +182,7 @@ fun GroupMenu(navController: NavController,Admin: Boolean,creator: Int,idGroup: 
 
 @ExperimentalFoundationApi
 @Composable
-fun listUsers(navController: NavController, Admin: Boolean,creator: Int,idGroup: String,viewModel: GroupViewModel) {
+fun listUsers(navController: NavController, Admin: Boolean,creator: Int,idGroup: String,viewModel: GroupViewModel,mainId: String) {
     val users =  remember { viewModel.users }
     Column(modifier = Modifier.fillMaxWidth()) {
         LazyVerticalGrid(
@@ -193,14 +193,14 @@ fun listUsers(navController: NavController, Admin: Boolean,creator: Int,idGroup:
         {
             items(users.size)
             {
-                userBlock(navController,user = users[it],Admin,creator, idGroup, viewModel)
+                userBlock(navController,user = users[it],Admin,creator, idGroup, viewModel, mainId)
             }
         }
     }
 }
 
 @Composable
-fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: Int,idGroup: String,viewModel: GroupViewModel) {
+fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: Int,idGroup: String,viewModel: GroupViewModel,mainId:String) {
     //open Dialog for options user
     val openDialog = remember { mutableStateOf(false)  }
     val openDialogInvite = remember { viewModel.openDialogInvite  }
@@ -272,7 +272,7 @@ fun userBlock(navController: NavController,user: User,Admin: Boolean,creator: In
                     }
                     Button(
                         onClick = {
-                            //todo add Open profile
+                            navController.navigate("Open_User_Profile/${idGroup}/${user.id}/${mainId}")
                             openDialog.value = false
                         }, colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)) {
                         Text("Open profile")
